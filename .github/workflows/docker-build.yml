@@ -2,31 +2,27 @@ name: QR Code Generator Docker Build
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches: [ main, feature/* ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t ayusifu/qr_codemaker .
-
-            - name: Test QR Code Generator
-        run: |
-          docker run --name qr-generator ayusifu/qr_codemaker --url https://github.com/Arafatyu/qr-code-generator.git
-          docker logs qr-generator
-          mkdir -p qr_output
-          docker cp qr-generator:/app/qr_codes/. ./qr_output/
-          ls -l qr_output
-          test -n "$(find qr_output -name 'QRCode_*.png' -size +0)"
-
-      - name: Upload QR code as artifact
-        uses: actions/upload-artifact@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          name: qr-code
-          path: qr_output/*.png
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Smoke run QR app
+        run: |
+          python main.py --url "https://hub.docker.com/r/ayusifu/qr_codemaker"
