@@ -16,36 +16,9 @@ jobs:
       - name: Build Docker image
         run: docker build -t ayusifu/qr_codemaker .
 
-      - name: Run QR Code Generator
+      - name: Test QR Code Generator
         run: |
-          docker run --name qr-test ayusifu/qr_codemaker --url https://github.com/Arafatyu/qr-code-generator.git
-          docker logs qr-test
-
-      - name: Copy generated QR code from container
-        run: |
-          mkdir -p qr_output
-          docker cp qr-test:/app/qr_codes/. ./qr_output/
-          ls -l qr_output
-
-      - name: Verify QR code was created
-        run: |
-          QR_FILE=$(ls qr_output/QRCode_*.png | head -n 1)
-          echo "Found: $QR_FILE"
-          test -s "$QR_FILE"
-
-      - name: Upload QR code as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: qr-code
-          path: qr_output/*.png
-
-      - name: Log in to Docker Hub
-        if: github.event_name == 'push'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Push image to Docker Hub
-        if: github.event_name == 'push'
-        run: docker push ayusifu/qr_codemaker:latest
+          docker run --name qr-generator ayusifu/qr_codemaker --url https://github.com/Arafatyu/qr-code-generator.git
+          docker logs qr-generator
+          docker cp qr-generator:/app/qr_codes/QRCode_20261022011138.png
+          test -s qr_code_test.png
